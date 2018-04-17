@@ -1,8 +1,10 @@
 bin/
 obj/
+v15/
 *.exe
 *.dll
 *.obj
 *.suo
 *.pdb
+*.user
 .DS_Store
