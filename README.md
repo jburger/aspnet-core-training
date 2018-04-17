@@ -165,7 +165,7 @@ This approach is useful if you know what you want, or if you're copying from ano
 
 Now pop open a shell. VS Code users can do this without extensions Using CTRL+<backtick> notice that has opened it in the root directory of your workspace.
 
-Type in to the shell
+#### Type in to the shell
 ```bash
 cd src/Fun.Api.Host
 dotnet add package Microsoft.EntityFrameworkCore
@@ -190,3 +190,39 @@ Typically visual studio users and users of other IDE's don't typically do this, 
 1. Fixing problems that are confusing because of tooling - go back to the CLI and try it there.
 2. Script automation during continuous integration, or troubleshooting a CI build. 
 
+### Centralised routing
+
+You'll notice that the ValuesController class that was generated in the Controllers folder of our source code, makes use of  meta-programming (Attributes) to designate the routing. This approach is fine for small jobs. 
+
+For bigger things it can really help to have a single place to go to, to inspect the way your application performs routing.
+
+Attribute routing can give you fine grained control over things like parameters though, so it definitely has its place, and shouldn’t be discounted from design discussion.
+
+So let's take a look at ASPNET Cores [conventional routing](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-2.1#conventional-routing) approach to building the routes for our API.
+
+Routes can be configured in our Startup class like this:
+
+```csharp
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+
+            app.UseMvc(WithConventionalRoutes);
+        }
+
+        private void WithConventionalRoutes(IRouteBuilder routeBuilder)
+        {
+            routeBuilder.MapRoute("default", "api/{controller}/{action}/{id?}");
+        }
+```
+
+The route template above tries to match the first segment of the HTTP Request URL (after the fixed segment 'api/') to a controller, the second segment to an action, and an optional third to a parameter named 'id'.
+
+Controller / Action / id
+
+So if we are requested a URL for /api/cheese/edit/1 it would be routed to a controller called CheeseController with a method signature of Edit(int? id)
+
+Additionally, we can still specify the verb on the Action using [HttpGet] or [HttpPost] and so forth
