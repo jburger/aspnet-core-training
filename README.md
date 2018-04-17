@@ -152,6 +152,8 @@ Let's start by bringing in some useful libraries that we are likely to require w
 - EntityFramework.Core
 
 ### 3 ways to add dependencies
+
+#### Change detection
 1. csproj change detection both visual studio and vs code are smart enough to tell when you've changed your csproj file. 
 
 In your csproj file you'll see an ItemGroup element that contains a PackageReference element. Add the following line underneath the exsting PackageReference and watch what happens. Accept any suggestions to restore your packages
@@ -180,3 +182,11 @@ This will get the latest Microsoft.EntityFrameworkCore package from nuget.org. Y
 ```
 
 > You can use version wildcards. See [this article](https://docs.microsoft.com/en-us/nuget/reference/package-versioning#version-ranges-and-wildcards) for more details.
+
+#### Visual Studio
+
+Typically visual studio users and users of other IDE's don't typically do this, as you can right click a projects 'references' and use the GUI to find packages. However there are times when knowing the approach from first principles is important:
+
+1. Fixing problems that are confusing because of tooling - go back to the CLI and try it there.
+2. Script automation during continuous integration, or troubleshooting a CI build. 
+
