@@ -32,3 +32,28 @@ Feel free to share and re-use. Please do log an issue if you spot any glaring is
 - Response conventions
 - Logging with Serilog
 - Testing with xunit
+  
+## Environment Setup
+
+1. Download and install .NET core SDK by following [this link](https://www.microsoft.com/net/download/dotnet-core/sdk-2.1.4) and downloading the appropriate installer for your operating system
+2. Your browser tab will show some guidance on how to install the package you downloaded, follow that and confirm you can run dotnet CLI from a new shell.
+```bash
+$ dotnet --version
+2.1.4
+```
+3. Install VS Code by following [this link](https://code.visualstudio.com/) and downloading the appropriate installer for your operating system
+4. Make a home for your new source code repository and create some boilerplate to get started on.
+
+The following commands will create a directory structure, create a project, and then add it to a new solution file.
+```bash
+mkdir -p Fun.Api/src/Fun.Api.Host
+cd Fun.Api/src/Fun.Api.Host
+dotnet new webapi
+cd ../../
+dotnet new sln
+dotnet sln add src/Fun.Api.Host/Fun.Api.Host.csproj
+```
+To check that everything is all good, now try to build your solution:
+```bash
+dotnet build Fun.Api.sln
+```
