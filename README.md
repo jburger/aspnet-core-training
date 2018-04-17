@@ -37,6 +37,7 @@ By the time you've finished those you should be well on your way.
 - Adding your own code
   - Adding dependencies
   - Centralising controller routing
+  - Domain modelling
   - Dependency Injection
   - Validating input
     - simple scenarios - data annotations + ModelState
@@ -156,16 +157,19 @@ Let's start by bringing in some useful libraries that we are likely to require w
 #### Change detection
 1. csproj change detection both visual studio and vs code are smart enough to tell when you've changed your csproj file. 
 
-In your csproj file you'll see an ItemGroup element that contains a PackageReference element. Add the following line underneath the exsting PackageReference and watch what happens. Accept any suggestions to restore your packages
+In your csproj file you'll see an ItemGroup element that contains a PackageReference element. Add the following lines underneath the exsting PackageReference and watch what happens. Accept any suggestions to restore your packages
 
 ```
 <PackageReference Include="FluentValidation" Version="7.5.2" />
+<PackageReference Include="Swashbuckle.AspNetCore" Version="2.4.0" />
+<PackageReference Include="Serilog" Version="2.0.2" />
+<PackageReference Include="Serilog.AspNetCore" Version="2.1.1" />
 ```
 This approach is useful if you know what you want, or if you're copying from another project. You can always run 'dotnet restore' in a shell local to this file to force a restore.
 
 Now pop open a shell. VS Code users can do this without extensions Using CTRL+<backtick> notice that has opened it in the root directory of your workspace.
 
-#### Type in to the shell
+Type in to the shell
 ```bash
 cd src/Fun.Api.Host
 dotnet add package Microsoft.EntityFrameworkCore
@@ -174,12 +178,17 @@ dotnet add package Microsoft.EntityFrameworkCore
 This will get the latest Microsoft.EntityFrameworkCore package from nuget.org. You could supply a semantic version with a --version parameter to fix the version number. You'll notice that this approach automated writing to the csproj file for us. Our package references now look like this: 
 
 ```xml
- <ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
     <PackageReference Include="FluentValidation" Version="7.5.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.0.2" />
- </ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="2.4.0" />
+    <PackageReference Include="Serilog" Version="2.6.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="2.1.1" />
+  </ItemGroup>
 ```
+
+Th
 
 > You can use version wildcards. See [this article](https://docs.microsoft.com/en-us/nuget/reference/package-versioning#version-ranges-and-wildcards) for more details.
 
@@ -190,39 +199,202 @@ Typically visual studio users and users of other IDE's don't typically do this, 
 1. Fixing problems that are confusing because of tooling - go back to the CLI and try it there.
 2. Script automation during continuous integration, or troubleshooting a CI build. 
 
-### Centralised routing
+## Centralising routing 
 
 You'll notice that the ValuesController class that was generated in the Controllers folder of our source code, makes use of  meta-programming (Attributes) to designate the routing. This approach is fine for small jobs. 
 
 For bigger things it can really help to have a single place to go to, to inspect the way your application performs routing.
 
-Attribute routing can give you fine grained control over things like parameters though, so it definitely has its place, and shouldn’t be discounted from design discussion.
+So let's take a look at ASPNET Core [conventional routing](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-2.1#conventional-routing) approach to building the routes for our API.
 
-So let's take a look at ASPNET Cores [conventional routing](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-2.1#conventional-routing) approach to building the routes for our API.
-
-Routes can be configured in our Startup class like this:
+We will be modifying the UseMvc call in the Startup classes Configure method. Make your Configure method look like this one.
 
 ```csharp
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
+public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+{
+    if (env.IsDevelopment())
+    {
+        app.UseDeveloperExceptionPage();
+    }
 
-            app.UseMvc(WithConventionalRoutes);
+    app.UseMvc(WithConventionalRoutes);
+}
+
+private void WithConventionalRoutes(IRouteBuilder routeBuilder)
+{
+    routeBuilder.MapRoute("default", "api/{controller}");
+}
+```
+This route definition mounts any requests onto /api/ and directs the first segment of the route to a 'controller'. From here we can use HTTP Verbs in our controllers method names to do the rest.
+
+We can also provide fine grained control of the parameters on each method on a controller, to tailor each route to the needs of our model. So now that we have this we can start thinking about the business problem we are trying to solve. 
+
+### Domain modelling
+
+> Domain modelling concepts can get pretty deep, so we'll build just enough to have something to work with, without going too far down the DDD rabbit hole.
+
+Today we'll be building an API for a business that looks after Pets while their owners go on holidays. The name of the business is 'FUN' which stands for Fuzzy UNited.
+
+To wrangle complexity, well use a Model to represent our problem domain. A 'Customer' makes a 'Booking' for one or more 'Pet's.
+
+We are going to need to manage each of these three entities, to create, retrieve, update, delete & list them. 
+
+A popular approach for creating these kinds of services is to use HTTP Verbs as a way to indicate to our API what kind of operation is required on our entities. The way to do this in aspnet core, is to create a Controller for each entity.
+
+Lets start with the PetController
+```csharp
+
+    public class PetController : Controller
+    {
+        [HttpGet]
+        public IActionResult Get()
+        {
+            return Ok();
         }
 
-        private void WithConventionalRoutes(IRouteBuilder routeBuilder)
+        // GET api/values/5
+        [HttpGet("{id}")]
+        public IActionResult Get(int id)
         {
-            routeBuilder.MapRoute("default", "api/{controller}/{action}/{id?}");
+            return Ok();
         }
+
+        // POST api/values
+        [HttpPost]
+        public IActionResult Post([FromBody]Pet pet)
+        {
+            return Ok();
+        }
+
+        // PUT api/values/5
+        [HttpPut("{id}")]
+        public IActionResult Put(int id, [FromBody]Pet value)
+        {
+            return Ok();
+        }
+
+        // DELETE api/values/5
+        public IActionResult Delete(int id)
+        {
+            return Ok();
+        }
+    }
+
 ```
 
-The route template above tries to match the first segment of the HTTP Request URL (after the fixed segment 'api/') to a controller, the second segment to an action, and an optional third to a parameter named 'id'.
+Go ahead and make similar classes for Customer, and Booking.
 
-Controller / Action / id
+This won't compile yet because we are missing a 'Pet' class. Because our controller operates with the outside world, this class forms part of our contract with any consumers of our API. 
 
-So if we are requested a URL for /api/cheese/edit/1 it would be routed to a controller called CheeseController with a method signature of Edit(int? id)
+**When building APIs we want to ensure two things:**
+1. That we can provide the outside world with a stable interface (a 'data contract' if you like)
+2. Have the freedom to change the implementation of that contract, without effecting consumers as much as possible
 
-Additionally, we can still specify the verb on the Action using [HttpGet] or [HttpPost] and so forth
+To do this we would normally make sure that our 'Domain' representation is decoupled from our 'data contract' to the outside world. In other words, we will provide two representations of the same thing: one for us, and on for our consumers. The downside is that we will have to map between these two representations, whenever we want to cross the boundary between our contract and our domain.
+
+#### Create a data contract library
+Sometimes we want to share our contract code with others, so we'll create a library to do this. Head on into our src directory and create a new folder called Fun.Api.DataContracts - then create a class library, don't forget to add it to your solution!
+
+```
+cd Fun.Api/src
+mkdir Fun.Api.DataContracts && cd Fun.Api.DataContracts
+dotnet new classlib 
+cd ../..
+dotnet sln add src/Fun.Api.DataContracts/Fun.Api.DataContracts.csproj
+```
+
+Now we need to add a reference to this project from our Host solution. This can also be done from the command line
+
+```
+dotnet add src/Fun.Api.Host/Fun.Api.Host.csproj reference src/Fun.Api.DataContracts/Fun.Api.DataContracts.csproj
+```
+
+Notice that this added some lines to our Host.csproj file?
+```xml
+  <ItemGroup>
+    <ProjectReference Include="..\Fun.Api.DataContracts\Fun.Api.DataContracts.csproj" />
+  </ItemGroup>
+```
+It is up to you how you choose to add references, but again, this is the first principles approach, just add it to the csproj file.
+
+Now add these classes:
+
+```
+    public class CreateBookingRequest
+    {
+        string StartDate { get; set; }
+        string EndDate { get; set; }
+        
+        int CustomerId { get; set; }
+        List<int> Pets { get; set; }
+    }
+    
+     public class CreateBookingResponse
+    {
+        int? Id { get; set; }
+        decimal DepositRequired { get; set; }
+        decimal TotalAmountOwing { get; set; }
+        DateTime DueDate { get; set; }
+    }
+    
+    public class CreateCustomerRequest
+    {
+        int Id { get; set; }
+        string Name { get; set; }
+    }
+    
+    public class CreatePetRequest
+    {
+        int Id { get; set; }
+        int CustomerId { get; set; }
+        string Name { get; set; }
+        string Description { get; set; }
+        string Type { get; set; }
+    }
+```
+
+Let's do the same for our Domain model, instead calling it Fun.Api.Domain this time, and put the following classes in that namespace. Don't forget to reference it, and add it to your solution file.
+
+Add these classes to the Domain Model:
+
+```csharp
+    public class Booking
+    {
+        int Id { get; set; }
+        decimal DepositPercentage { get; set; }
+        decimal TotalAmountOwing { get; set; }
+        DateTime DueDate { get; set; }
+
+        DateTime StartDate { get; set; }
+        DateTime EndDate { get; set; }
+        
+        Customer Customer { get; set; }
+        List<Pet> Pets { get; set; }
+    }
+    
+     public class Customer
+    {
+        int Id { get; set; }
+        string Name { get; set; }
+        List<Pet> Pets { get; set; }
+    }
+    
+    public class Pet
+    {
+        public int Id { get; set; }
+        public int CustomerId { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public PetType Type { get; set; }
+    }
+
+    public class PetType
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+```
+
+
+
+
