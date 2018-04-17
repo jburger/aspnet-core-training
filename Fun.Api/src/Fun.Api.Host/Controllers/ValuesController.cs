@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Fun.Api.Host.Controllers
 {
-    [Route("api/[controller]")]
     public class ValuesController : Controller
     {
         // GET api/values
@@ -17,7 +16,6 @@ namespace Fun.Api.Host.Controllers
         }
 
         // GET api/values/5
-        [HttpGet("{id}")]
         public string Get(int id)
         {
             return "value";
@@ -30,13 +28,11 @@ namespace Fun.Api.Host.Controllers
         }
 
         // PUT api/values/5
-        [HttpPut("{id}")]
         public void Put(int id, [FromBody]string value)
         {
         }
 
         // DELETE api/values/5
-        [HttpDelete("{id}")]
         public void Delete(int id)
         {
         }
