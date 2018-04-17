@@ -34,12 +34,13 @@ By the time you've finished those you should be well on your way.
     - dotnet watch run
     - Building with tasks.json
     - Debugging with launch.json
-- Adding dependencies
-- Adding a controller
-- Dependency Injection
-- Validating input
-  - simple scenarios - data annotations + ModelState
-  - complex scenarios - FluentValidator + ModelState
+- Adding your own code
+  - Adding dependencies
+  - Centralising controller routing
+  - Dependency Injection
+  - Validating input
+    - simple scenarios - data annotations + ModelState
+    - complex scenarios - FluentValidator
 - Configuration
   - Many sources
   - Hooking up a database
@@ -139,3 +140,43 @@ cd src/Fun.Api.Host
 dotnet restore
 dotnet watch run
 ```
+
+## Adding your own code
+
+### Adding dependencies
+
+Let's start by bringing in some useful libraries that we are likely to require when building out our API. We'll bring in the following nuget packages.
+
+- FluentValidator
+- Newtonsoft.Json
+- EntityFramework.Core
+
+### 3 ways to add dependencies
+1. csproj change detection both visual studio and vs code are smart enough to tell when you've changed your csproj file. 
+
+In your csproj file you'll see an ItemGroup element that contains a PackageReference element. Add the following line underneath the exsting PackageReference and watch what happens. Accept any suggestions to restore your packages
+
+```
+<PackageReference Include="FluentValidation" Version="7.5.2" />
+```
+This approach is useful if you know what you want, or if you're copying from another project. You can always run 'dotnet restore' in a shell local to this file to force a restore.
+
+Now pop open a shell. VS Code users can do this without extensions Using CTRL+<backtick> notice that has opened it in the root directory of your workspace.
+
+Type in to the shell
+```bash
+cd src/Fun.Api.Host
+dotnet add package Microsoft.EntityFrameworkCore
+```
+
+This will get the latest Microsoft.EntityFrameworkCore package from nuget.org. You could supply a semantic version with a --version parameter to fix the version number. You'll notice that this approach automated writing to the csproj file for us. Our package references now look like this: 
+
+```xml
+ <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
+    <PackageReference Include="FluentValidation" Version="7.5.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.0.2" />
+ </ItemGroup>
+```
+
+> You can use version wildcards. See [this article](https://docs.microsoft.com/en-us/nuget/reference/package-versioning#version-ranges-and-wildcards) for more details.
