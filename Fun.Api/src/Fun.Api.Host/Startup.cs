@@ -41,7 +41,7 @@ namespace Fun.Api.Host
 
         private void WithConventionalRoutes(IRouteBuilder routeBuilder)
         {
-            routeBuilder.MapRoute("default", "{controller=Home}/{action=Index}/{id?}");
+            routeBuilder.MapRoute("default", "api/{controller}");
         }
     }
 }
